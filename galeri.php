@@ -1,248 +1,61 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
+<?php
+require_once 'config/koneksi.php';
+$page_title = "Galeri - Kelurahan Waioti";
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+$kategori = isset($_GET['kategori']) ? mysqli_real_escape_string($koneksi, $_GET['kategori']) : '';
+$where    = $kategori ? "WHERE kategori='" . $kategori . "'" : "";
 
-<title>Galeri Kelurahan Waioti</title>
+$galeri  = mysqli_query($koneksi, "SELECT * FROM tb_galeri $where ORDER BY created_at DESC");
+$katlist = mysqli_query($koneksi, "SELECT DISTINCT kategori FROM tb_galeri ORDER BY kategori");
+?>
+<?php include 'includes/header.php'; ?>
+<?php include 'includes/navbar.php'; ?>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-<style>
-
-body{
-    font-family:'Segoe UI',sans-serif;
-    background:#f5f5f5;
-}
-
-.navbar{
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-
-.hero{
-    background:#0b5d3b;
-    color:white;
-    padding:70px 0;
-    text-align:center;
-}
-
-.hero h1{
-    font-size:45px;
-    font-weight:bold;
-}
-
-.galeri{
-    padding:70px 0;
-}
-
-.card{
-    border:none;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 5px 15px rgba(0,0,0,.1);
-    transition:.3s;
-}
-
-.card:hover{
-    transform:translateY(-8px);
-}
-
-.card img{
-    width:100%;
-    height:220px;
-    object-fit:cover;
-}
-
-.card-body{
-    text-align:center;
-}
-
-.footer{
-    background:#0b5d3b;
-    color:white;
-    text-align:center;
-    padding:20px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<nav class="navbar navbar-expand-lg bg-white">
-
-<div class="container">
-
-<a class="navbar-brand fw-bold text-success" href="index.php">
-
-Kelurahan Waioti
-
-</a>
-
-<ul class="navbar-nav ms-auto">
-
-<li class="nav-item">
-
-<a class="nav-link" href="index.php">Beranda</a>
-
-</li>
-
-<li class="nav-item">
-
-<a class="nav-link active" href="galeri.php">Galeri</a>
-
-</li>
-
-</ul>
-
-</div>
-
-</nav>
-
-<section class="hero">
-
-<div class="container">
-
-<h1>Galeri Kelurahan Waioti</h1>
-
-<p>Dokumentasi kegiatan dan pelayanan masyarakat</p>
-
-</div>
-
+<section class="header">
+    <div class="container">
+        <h1><i class="bi bi-images"></i> Galeri Kegiatan</h1>
+        <p>Dokumentasi kegiatan dan pelayanan masyarakat</p>
+    </div>
 </section>
 
-<section class="galeri">
+<section class="content">
+    <div class="container">
 
-<div class="container">
+        <!-- Filter Kategori -->
+        <div class="mb-4">
+            <a href="galeri.php" class="btn btn-sm <?= !$kategori ? 'btn-success' : 'btn-outline-success' ?>">Semua</a>
+            <?php while ($k = mysqli_fetch_assoc($katlist)): ?>
+            <a href="galeri.php?kategori=<?= urlencode($k['kategori']) ?>"
+               class="btn btn-sm <?= $kategori === $k['kategori'] ? 'btn-success' : 'btn-outline-success' ?>">
+                <?= $k['kategori'] ?>
+            </a>
+            <?php endwhile; ?>
+        </div>
 
-<div class="row g-4">
+        <div class="row g-4">
+            <?php if (mysqli_num_rows($galeri) == 0): ?>
+            <div class="col-12">
+                <div class="alert alert-info text-center">Belum ada foto pada kategori ini.</div>
+            </div>
+            <?php endif; ?>
 
-<div class="col-md-4">
+            <?php while ($g = mysqli_fetch_assoc($galeri)): ?>
+            <div class="col-md-4 col-6">
+                <div class="gallery-item">
+                    <img src="<?= BASE_URL ?>assets/img/<?= $g['gambar'] ?>"
+                         alt="<?= htmlspecialchars($g['judul']) ?>"
+                         onerror="this.src='<?= BASE_URL ?>assets/img/default.jpg'">
+                    <div class="gallery-overlay">
+                        <span class="badge bg-success mb-1"><?= $g['kategori'] ?></span>
+                        <h6 class="mb-0"><?= htmlspecialchars($g['judul']) ?></h6>
+                        <small><?= htmlspecialchars($g['keterangan']) ?></small>
+                    </div>
+                </div>
+            </div>
+            <?php endwhile; ?>
+        </div>
 
-<div class="card">
-
-<img src="img/galeri1.jpg">
-
-<div class="card-body">
-
-<h5>Gotong Royong</h5>
-
-<p>Kegiatan kerja bakti masyarakat.</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<img src="img/galeri2.jpg">
-
-<div class="card-body">
-
-<h5>Pelayanan Kantor</h5>
-
-<p>Pelayanan administrasi penduduk.</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<img src="img/galeri3.jpg">
-
-<div class="card-body">
-
-<h5>Posyandu</h5>
-
-<p>Kegiatan kesehatan masyarakat.</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<img src="img/galeri4.jpg">
-
-<div class="card-body">
-
-<h5>Musyawarah</h5>
-
-<p>Rapat bersama warga.</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<img src="img/galeri5.jpg">
-
-<div class="card-body">
-
-<h5>Peringatan Hari Besar</h5>
-
-<p>Kegiatan bersama masyarakat.</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<img src="img/galeri6.jpg">
-
-<div class="card-body">
-
-<h5>Kerja Bakti</h5>
-
-<p>Membersihkan lingkungan kelurahan.</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+    </div>
 </section>
 
-<footer class="footer">
-
-<h5>Sistem Informasi Data Penduduk</h5>
-
-<p>© 2026 Kelurahan Waioti</p>
-
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>
