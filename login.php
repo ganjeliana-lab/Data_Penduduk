@@ -1,45 +1,36 @@
 <?php
 // ============================================
-// LOGIN.PHP - VERSI STANDALONE (ANTI ERROR)
+// LOGIN STANDALONE - TIDAK BERGANTUNG FILE LAIN
 // ============================================
 
-// 1. Inisialisasi session
+// 1. Session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2. Konfigurasi dasar (didefinisikan langsung)
-define('BASE_URL', '/Data_Penduduk/');
-define('APP_NAME', 'Kelurahan Waioti');
+// 2. Konstanta (hardcode, tidak butuh koneksi.php)
+if (!defined('BASE_URL'))  define('BASE_URL', '/Data_Penduduk/');
+if (!defined('APP_NAME'))  define('APP_NAME', 'Kelurahan Waioti');
 
-// 3. Fungsi helper (fallback)
+// 3. Helper functions (pasti ada)
 if (!function_exists('url')) {
-    function url($path = '') {
-        return BASE_URL . ltrim($path, '/');
-    }
+    function url($p = '') { return BASE_URL . ltrim($p, '/'); }
 }
 if (!function_exists('redirect')) {
-    function redirect($url) {
-        header("Location: " . $url);
-        exit;
-    }
+    function redirect($u) { header("Location: " . $u); exit; }
 }
 if (!function_exists('is_login')) {
-    function is_login() {
-        return isset($_SESSION['user']);
-    }
+    function is_login() { return isset($_SESSION['user']); }
+}
+if (!function_exists('e')) {
+    function e($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
 }
 
-// 4. Koneksi database
-$host     = "localhost";
-$db_user  = "root";
-$db_pass  = "";
-$database = "db_penduduk";
+// 4. Koneksi DB langsung
+$koneksi = @mysqli_connect("localhost", "root", "", "db_penduduk");
+$db_ok   = (bool) $koneksi;
 
-$koneksi = @mysqli_connect($host, $db_user, $db_pass, $database);
-$db_ok = (bool) $koneksi;
-
-// 5. Jika sudah login, lempar ke dashboard
+// 5. Sudah login? lempar ke dashboard
 if (is_login()) {
     redirect(url('admin/dashboard.php'));
 }
@@ -60,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
 
         if ($q && mysqli_num_rows($q) > 0) {
             $user = mysqli_fetch_assoc($q);
-
             if (password_verify($password, $user['password'])) {
                 session_regenerate_id(true);
                 $_SESSION['user']         = $user['id_user'];
@@ -86,20 +76,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0b5d3b 0%, #193452 100%); min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; }
-        .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { background: #fff; border-radius: 15px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-        .login-card h4 { color: #193452; }
-        .btn-success { background: #0b5d3b; border-color: #0b5d3b; }
-        .btn-success:hover { background: #075a45; border-color: #075a45; }
-        .text-success { color: #0b5d3b !important; }
+        body{background:linear-gradient(135deg,#0b5d3b 0%,#193452 100%);min-height:100vh;margin:0;font-family:'Segoe UI',sans-serif;}
+        .login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+        .login-card{background:#fff;border-radius:15px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+        .login-card h4{color:#193452;}
+        .btn-success{background:#0b5d3b;border-color:#0b5d3b;}
+        .btn-success:hover{background:#075a45;border-color:#075a45;}
+        .text-success{color:#0b5d3b !important;}
     </style>
 </head>
 <body>
 
 <div class="login-container">
     <div class="login-card">
-
         <div class="text-center mb-4">
             <i class="bi bi-shield-lock-fill text-success" style="font-size:4rem;"></i>
             <h4 class="mt-3">Login Admin</h4>
@@ -110,14 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
         <?php if (!$db_ok): ?>
         <div class="alert alert-warning py-2">
             <i class="bi bi-exclamation-triangle"></i>
-            <strong>Koneksi database gagal!</strong><br>
-            <small>Pastikan database <code>db_penduduk</code> sudah dibuat di phpMyAdmin dan file SQL sudah diimport.</small>
+            <strong>Database belum siap!</strong><br>
+            <small>Buka <code>http://localhost/phpmyadmin</code>, buat database <code>db_penduduk</code>, lalu import file SQL-nya.</small>
         </div>
         <?php endif; ?>
 
         <?php if ($error !== ''): ?>
         <div class="alert alert-danger py-2">
-            <i class="bi bi-exclamation-circle"></i> <?= htmlspecialchars($error) ?>
+            <i class="bi bi-exclamation-circle"></i> <?= e($error) ?>
         </div>
         <?php endif; ?>
 
@@ -127,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-person"></i></span>
                     <input type="text" name="username" class="form-control"
-                           value="<?= htmlspecialchars($username_old) ?>"
+                           value="<?= e($username_old) ?>"
                            placeholder="Masukkan username" required autofocus>
                 </div>
             </div>
@@ -158,7 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
             <strong>Demo Login:</strong><br>
             Username: <code>admin</code> &nbsp;|&nbsp; Password: <code>admin123</code>
         </div>
-
     </div>
 </div>
 
